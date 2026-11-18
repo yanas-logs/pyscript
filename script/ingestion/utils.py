@@ -1,6 +1,7 @@
 import functools
 import logging
 import random
+import threading
 import time
 from typing import Any, Callable, List, Tuple, Type
 
@@ -14,21 +15,29 @@ class RateLimiter:
         self.max_calls = max_calls
         self.period = period
         self.calls: List[float] = []
+        self._lock = threading.Lock()
 
     def wait_if_needed(self) -> None:
         """Pause execution if the maximum number of calls in the current period is reached."""
-        now = time.monotonic()
-        self.calls = [t for t in self.calls if now - t < self.period]
+        with self._lock:
+            now = time.monotonic()
+            
+            self.calls = [t for t in self.calls if now - t < self.period]
 
-        if len(self.calls) >= self.max_calls:
-            sleep_time = self.period - (now - self.calls)
-            if sleep_time > 0:
-                logger.debug(
-                    f"Rate limit reached. Sleeping for {sleep_time:.2f}s..."
-                )
-                time.sleep(sleep_time)
+            if len(self.calls) >= self.max_calls:
+                
+                sleep_time = self.period - (now - self.calls[0])
+                if sleep_time > 0:
+                    logger.debug(
+                        f"Rate limit reached ({self.max_calls}/{self.period}s). "
+                        f"Sleeping for {sleep_time:.2f}s..."
+                    )
+                    time.sleep(sleep_time)
 
-        self.calls.append(time.monotonic())
+                now = time.monotonic()
+                self.calls = [t for t in self.calls if now - t < self.period]
+
+            self.calls.append(time.monotonic())
 
 
 def retry_with_backoff(
@@ -37,15 +46,7 @@ def retry_with_backoff(
     max_delay: float = 30.0,
     exceptions: Tuple[Type[Exception], ...] = (Exception,),
 ) -> Callable:
-    """Decorator that retries a function using exponential backoff with jitter.
-
-    Args:
-        max_retries: Maximum number of retry attempts before raising the
-          exception.
-        base_delay: Initial delay in seconds before the first retry.
-        max_delay: Maximum upper bound for delay in seconds.
-        exceptions: Tuple of exception classes that trigger a retry.
-    """
+    """Decorator that retries a function using exponential backoff with jitter."""
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
