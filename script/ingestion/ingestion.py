@@ -1,9 +1,12 @@
-
 import logging
 import os
 from typing import Any, Dict, List, Optional
+from dotenv import load_dotenv
 
 from script.ingestion.clients import BaseIngestionClient, ClientA, ClientB
+
+# Load environment variables from .env if present
+load_dotenv()
 
 logger = logging.getLogger("IngestionManager")
 
