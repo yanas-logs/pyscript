@@ -1,0 +1,36 @@
+[
+  {
+    "source": "source_a",
+    "item_id": "101",
+    "metrics": {
+      "score": 85,
+      "attribute_1": 0.74
+    }
+  },
+  {
+    "source": "source_b",
+    "item_id": "201",
+    "metrics": {
+      "score": 92,
+      "attribute_1": 0.88
+    }
+  },
+  {
+    "source": "source_a",
+    "item_id": "",
+    "metrics": {
+      "score": 70
+    }
+  },
+  {
+    "source": "source_b",
+    "item_id": "202",
+    "metrics": "invalid_metrics_type"
+  },
+  {
+    "item_id": "301",
+    "metrics": {
+      "score": 60
+    }
+  }
+]
